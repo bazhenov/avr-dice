@@ -15,7 +15,7 @@
 #define LATCH PINB1
 #define DATA PINB3
 #define CLOCK PINB4
-#define BUTTON PINB
+#define BUTTON PINB0
 
 void setup() {
 }
@@ -47,18 +47,38 @@ uint8_t numbers[] = {
 	0b01111110  // 6
 };
 
+void delay_ms(uint16_t count) {
+	while(count--)
+		_delay_ms(1);
+}
+
+void diceRoll() {
+	int dl = 10;
+	uint8_t lastNo = -1;
+	while (dl < 200) {
+		uint8_t no;
+		do {
+			no = rand() % 6;
+		} while (no == lastNo);
+		shiftOut(numbers[no]);
+		delay_ms(dl);
+		dl *= 1.1;
+	}
+}
+
 int	main(void) {
 	setup();
 	DDRB = _BV(LATCH) | _BV(DATA) | _BV(CLOCK);
-  //PORTB = _BV(BUTTON); // enable pull up for button
-	PORTB = 0;
+  PORTB = _BV(BUTTON); // enable pull up for button
 
-	uint8_t d = 0;
   for (;;) {
-		d++;
-		//bit_write(d & 1, PORTB, DATA);
-		shiftOut(numbers[d % 6]);
-		_delay_us(1000000);
+		shiftOut(0);
+		while ((PINB >> BUTTON) & 1) {
+			_delay_ms(50);
+		}
+		diceRoll();
+		_delay_ms(3000);
+		shiftOut(0);
 	}
 	return 0;
 }
